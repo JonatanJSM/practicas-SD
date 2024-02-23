@@ -10,61 +10,50 @@
 #define PORT 12345
 
 // https://www.geeksforgeeks.org/socket-programming-cc/
+// https://stackoverflow.com/questions/66554581/difference-between-send-and-sendto-in-c-for-a-udp-network-implementation
+// hilos de ejecucion para que se pueda hacer en un solo archivo
 
 int main(int argc, char const *argv[]){
-	    int server_fd, new_socket;
-    ssize_t valread;
-    struct sockaddr_in address;
-    int opt = 1;
-    socklen_t addrlen = sizeof(address);
-    char buffer[1024] = { 0 };
-    char* hello = "Hello from server";
- 
-    // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("socket failed");
+	int sockfd;
+    struct sockaddr_in server_addr, client_addr;
+    char buffer[20];
+
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        perror("Error al crear socket");
         exit(EXIT_FAILURE);
     }
- 
-    // Forcefully attaching socket to the port 8080
-    if (setsockopt(server_fd, SOL_SOCKET,
-                   SO_REUSEADDR, &opt,
-                   sizeof(opt))) {
-        perror("setsockopt");
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    // Enlazar socket al puerto
+    if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Error al enlazar");
         exit(EXIT_FAILURE);
     }
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
- 
-    // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr*)&address,
-             sizeof(address))
-        < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
+
+    printf("Servidor esperando mensajes en el puerto %d...\n", PORT);
+
+    while (1) {
+        socklen_t client_addr_size = sizeof(client_addr);
+
+        // Recibir mensaje del cliente
+        ssize_t bytes_received = recvfrom(sockfd, buffer, 20, 0, (struct sockaddr*)&client_addr, &client_addr_size);
+        if (bytes_received == -1) {
+            perror("Error al recibir mensaje");
+            exit(EXIT_FAILURE);
+        } else {
+            buffer[bytes_received] = '\0';
+            printf("Mensaje recibido de %s:%d: %s\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port), buffer);
+
+            // Enviar respuesta al cliente
+            printf("Respuesta: ");
+            fgets(buffer, 20, stdin);
+            sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&client_addr, client_addr_size);
+        }
     }
-    if (listen(server_fd, 3) < 0) {
-        perror("listen");
-        exit(EXIT_FAILURE);
-    }
-    if ((new_socket
-         = accept(server_fd, (struct sockaddr*)&address,
-                  &addrlen))
-        < 0) {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
-    valread = read(new_socket, buffer,
-                   1024 - 1); // subtract 1 for the null
-                              // terminator at the end
-    printf("%s\n", buffer);
-    send(new_socket, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
- 
-    // closing the connected socket
-    close(new_socket);
-    // closing the listening socket
-    close(server_fd);
+
+    close(sockfd);
     return 0;
 }

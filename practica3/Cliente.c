@@ -6,35 +6,48 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#define PORT 12345
 
 // https://www.geeksforgeeks.org/socket-programming-cc/
 
 int main(int argc, char const *argv[])
 {
-    int puerto = 12345, longitud_cliente;
-    char buffer[50] = {0};
-    char mensajeEnviar[50]= {0};
-	struct sockaddr_in servaddr = {0};
-	
-	int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-	if(sockfd == -1){
-		perror("failed to create socket");
-		exit(EXIT_FAILURE);
-	}
-	
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(puerto);
-	inet_pton(AF_INET, "127.0.0.1" , &(servaddr.sin_addr));
-
-    if(connect(sockfd, (struct sockaddr *)&servaddr, sizeof(struct sockaddr)) == -1){
-        perror("Error en connect");
-        exit(-1);
+       int status, valread, client_fd;
+    struct sockaddr_in serv_addr;
+    char* hello = "Hello from client";
+    char buffer[1024] = { 0 };
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Socket creation error \n");
+        return -1;
     }
-
-	while(1){
-        gets(mensajeEnviar);
-        write(sockfd, mensajeEnviar, strlen(mensajeEnviar)+1);
+ 
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+ 
+    // Convert IPv4 and IPv6 addresses from text to binary
+    // form
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)
+        <= 0) {
+        printf(
+            "\nInvalid address/ Address not supported \n");
+        return -1;
     }
-	close(sockfd);
+ 
+    if ((status
+         = connect(client_fd, (struct sockaddr*)&serv_addr,
+                   sizeof(serv_addr)))
+        < 0) {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+    send(client_fd, hello, strlen(hello), 0);
+    printf("Hello message sent\n");
+    valread = read(client_fd, buffer,
+                   1024 - 1); // subtract 1 for the null
+                              // terminator at the end
+    printf("%s\n", buffer);
+ 
+    // closing the connected socket
+    close(client_fd);
     return 0;
 }

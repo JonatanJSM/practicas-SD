@@ -3,6 +3,7 @@ package rmi;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+//Implementación de las funciones
 public class RMI extends UnicastRemoteObject implements conversionInterface{
     public RMI() throws RemoteException{}
 

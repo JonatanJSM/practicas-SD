@@ -1,0 +1,6 @@
+crear el .x
+ejecutar rpcgen -a -C convertidor.x
+editar archivos cliente y servidor
+
+
+NO ENCUENTRA LA LIB RPC.H Y LA TENGO INSTALADO, NO ENTIENDO ._.

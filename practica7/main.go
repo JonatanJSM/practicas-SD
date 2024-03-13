@@ -1,14 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"math/rand"
 	"practica7/pubsub"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var availableTopics = map[string]string{
@@ -18,62 +14,33 @@ var availableTopics = map[string]string{
 	"FD": "FaridDieck",
 }
 
-func DbConection() *sql.DB {
-	//Configura la cadena de conexión a tu base de datos MySQL
-	dsn := "root:@tcp(localhost:3306)/sistemasDistribuidos"
-
-	// Abre la conexión con la base de datos
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return db
+var availableMessages = map[string]string{
+	"1": "Ha subido un nuevo video",
+	"2": "Ha Iniciado un live",
+	"3": "Ha muerto",
+	"4": "Te ha mencionado",
 }
 
 func chanelPublisher(broker *pubsub.Broker) {
-	topicKeys := make([]string, 0, len(availableTopics))
 	topicValues := make([]string, 0, len(availableTopics))
-	mensaje := "NuevasPruebas"
-	temas := []string{"RB", "LC"}
-	tema := "RB"
+	messagesValues := make([]string, 0, len(availableMessages))
 
-	//publish prueba-----------------------
-	dbConection := DbConection()
-	query := "INSERT INTO youTube (tema, mensaje, fecha) VALUES (?, ?, NOW())"
-	_, err := dbConection.Exec(query, tema, mensaje)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//final publish prueba----------------
-
-	//broadcast prueba-----------------------
-	if len(temas) != 0 {
-		for _, temaFor := range temas {
-			query := "INSERT INTO youTube (tema, mensaje, fecha) VALUES (?, ?, NOW())"
-			_, err := dbConection.Exec(query, temaFor, mensaje)
-
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-	//final broadcast prueba------------------
-
-	for k, v := range availableTopics {
-		topicKeys = append(topicKeys, k)
+	for _, v := range availableTopics {
 		topicValues = append(topicValues, v)
 	}
+
+	for _, v := range availableMessages {
+		messagesValues = append(messagesValues, v)
+	}
+
 	for {
-		randValue := topicValues[rand.Intn(len(topicValues))] // all topic values.
-		msg := fmt.Sprintf("%f", rand.Float64())
-		// fmt.Printf("Publishing %s to %s topic\n", msg, randKey)
+		randValue := topicValues[rand.Intn(len(topicValues))]
+		msg := messagesValues[rand.Intn(len(messagesValues))]
+
 		go broker.Publish(randValue, msg)
-		// Uncomment if you want to broadcast to all topics.
-		// go broker.Broadcast(msg, topicValues)
-		r := rand.Intn(4)
-		time.Sleep(time.Duration(r) * time.Second) //sleep for random secs.
+
+		r := rand.Intn(2)
+		time.Sleep(time.Duration(r) * time.Second) //Espera por unos segundos.
 	}
 }
 

@@ -1,9 +1,25 @@
 package pubsub
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
 )
+
+func DbConection() *sql.DB {
+	//Configura la cadena de conexión a tu base de datos MySQL
+	dsn := "root:@tcp(localhost:3306)/sistemasDistribuidos"
+
+	// Abre la conexión con la base de datos
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return db
+}
 
 type Subscribers map[string]*Subscriber // Crea un nuevo tipo que es un mapa de suscriptores
 
@@ -81,6 +97,12 @@ func (b *Broker) Publish(topic string, msg string) { // Envia un mensaje a un te
 		}
 		go (func(s *Subscriber) {
 			s.Signal(m)
+			query := "INSERT INTO youTube (tema, mensaje) VALUES (?, ?)"
+			dbConection := DbConection()
+			_, err := dbConection.Exec(query, topic, msg)
+			if err != nil {
+				log.Fatal(err)
+			}
 		})(s)
 	}
 }

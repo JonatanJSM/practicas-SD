@@ -1,0 +1,6 @@
+CREATE TABLE youTube(  
+    id int NOT NULL PRIMARY KEY AUTO_INCREMENT COMMENT 'Primary Key',
+    tema VARCHAR(50),
+    mensaje VARCHAR(50),
+    fecha DATE
+) COMMENT 'Este es una tabla de prueba para el curso de sistemas distribuidos';

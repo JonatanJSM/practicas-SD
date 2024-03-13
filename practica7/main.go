@@ -33,8 +33,11 @@ func DbConection() *sql.DB {
 func chanelPublisher(broker *pubsub.Broker) {
 	topicKeys := make([]string, 0, len(availableTopics))
 	topicValues := make([]string, 0, len(availableTopics))
-	mensaje := "pruebaBD"
+	mensaje := "NuevasPruebas"
+	temas := []string{"RB", "LC"}
 	tema := "RB"
+
+	//publish prueba-----------------------
 	dbConection := DbConection()
 	query := "INSERT INTO youTube (tema, mensaje, fecha) VALUES (?, ?, NOW())"
 	_, err := dbConection.Exec(query, tema, mensaje)
@@ -42,7 +45,21 @@ func chanelPublisher(broker *pubsub.Broker) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dbConection.Close()
+
+	//final publish prueba----------------
+
+	//broadcast prueba-----------------------
+	if len(temas) != 0 {
+		for _, temaFor := range temas {
+			query := "INSERT INTO youTube (tema, mensaje, fecha) VALUES (?, ?, NOW())"
+			_, err := dbConection.Exec(query, temaFor, mensaje)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+	//final broadcast prueba------------------
 
 	for k, v := range availableTopics {
 		topicKeys = append(topicKeys, k)
